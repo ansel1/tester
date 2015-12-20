@@ -1,20 +1,42 @@
+---
 resources:
   - name: tester.git
     type: git
     source:
-      uri: git@github.com:ansel1/tester.git
+      uri: https://github.com/ansel1/tester.git
       branch: master
 
   - name: tester-docker-image
     type: docker-image
     source:
       repository: ansel1/tester
+      email: russ@safemonk.com
       username: ansel1
       password: 67ltpGD7LWZzGVg
 
 jobs:
 - name: build-tester-docker-image
   plan:
-    - get: tester.git
-    - put: tester-docker-image
-      params: {build: tester.git}
+  - get: tester.git
+  - task: hello-world
+    config:
+      platform: linux
+      image: docker:///ubuntu#14.04
+      inputs:
+        - name: tester.git
+      run:
+        path: echo
+        args: [hi mom]
+  - put: tester-docker-image
+    params: {build: tester.git}
+- name: run-docker-command
+  plan:
+  - get: tester-docker-image
+  - task: docker-command
+    config:
+      platform: linux
+      image: docker:///ansel1/tester#latest
+      inputs:
+        - name: tester-docker-image
+      run:
+        path: /hello.sh
